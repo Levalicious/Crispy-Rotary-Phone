@@ -10,3 +10,10 @@ I might add a class for a larger array at some point so that it can theoreticall
 Also supports nesting trashcans. Prepare for the most unsanitary matryoshka in existence.
 
 If you use this, please don't hate me when it breaks - it tends to do that every few minutes.
+
+TO DO:
+* Fix the isEncoded() method. Currently works by trying to decode the byte[], and if the decoding causes an out of memory error, considers it to not be encoded. Needless to say, that's bad.
+* Fix up for random-access! (ish). If I can deserialize lists, I should be able to deserialize parts of them just by looking at the indicator for the number of elements, & the indicators for the length of each element up to the one I actually care about.
+* Speed: Check against FlatBuffers & ProtoBuf
+* Output Size: Check against FlatBuffers & ProtoBuf. Currently appears to be a few bytes smaller than protobuf, but I'm willing to bet that's because unlike protobuf, this doesn't need to indicate the data type of encoded elements.
+* Give the option of encoding in the current form (Everything is a byte array and you can't convince me otherwise) or in a more normal form (this array here is the encoding of a ______ and contains ______)
