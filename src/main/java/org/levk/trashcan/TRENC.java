@@ -4,13 +4,22 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
 public class TRENC {
+    public static final byte[] EMPTY_ELEMENT_TRENC = encode(new byte[1]);
+
     public static byte[] encode(byte[] data) {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-            byte[] prefix = getLengthBytes(data.length);
-            out.write(prefix);
-            out.write(data);
+            byte[] prefix;
+            if (data == null) {
+                prefix = new byte[]{(byte)0x80};
+                out.write(prefix);
+            } else {
+                prefix = getLengthBytes(data.length);
+                out.write(prefix);
+                out.write(data);
+            }
+
             return out.toByteArray();
         } catch (Exception e) {
             e.printStackTrace();
@@ -26,8 +35,6 @@ public class TRENC {
             outputStream.write(getLengthBytes(data.length));
 
             for (byte[] subDat : data) {
-                if (subDat == null) throw new RuntimeException("Cannot encode null elements.");
-
                 outputStream.write(encode(subDat));
             }
 
@@ -45,9 +52,13 @@ public class TRENC {
     /* I really hope this works it looks terrifying to me */
     private static ENCList decode(byte[] data, int startPos) {
         ENCList fin = new ENCList();
+        if (data[startPos] == ((byte)0x80)) {
+            fin.add(new ENCItem(new byte[0]));
+            return fin;
+        }
 
         /* If the serialized item is a list */
-        if (data[0 + startPos] == 0x00) {
+        if (data[startPos] == 0x00) {
             int offset;
             int elCount;
 
@@ -82,12 +93,12 @@ public class TRENC {
             int elLength;
 
             /* If serialized item is less than 128 bytes in length */
-            if ((data[0 + startPos] & 0xFF) > (0x80 & 0xFF)) {
+            if ((data[0 + startPos] & 0xFF) >= (0x80 & 0xFF)) {
                 offset = 1;
                 elLength = (data[0 + startPos] & 0xFF) % (0x80 & 0xFF);
             } else {
                 /* If the item is greater than 128 bytes */
-                byte[] elLengthBytes = Arrays.copyOfRange(data, 1 + startPos, 1 + data[0 + startPos] + startPos);
+                byte[] elLengthBytes = Arrays.copyOfRange(data, 1 + startPos, 1 + (data[startPos] & 0xFF) + startPos);
                 offset = 1 + elLengthBytes.length;
                 elLength = fromBytes(elLengthBytes) + 127;
             }
@@ -100,10 +111,83 @@ public class TRENC {
         }
     }
 
+    public static boolean isEncoded(byte[] data) {
+        Tuple<Boolean, Integer> isEnc = isEncoded(data, 0);
+
+        if (!isEnc.x) return false;
+
+        if (isEnc.y != data.length) return false;
+
+        return true;
+    }
+
+    public static Tuple<Boolean, Integer> isEncoded(byte[] data, int startPos) {
+        if (data[startPos] == ((byte)0x80)) {
+            return new Tuple(true, 1);
+        }
+
+        /* If the serialized item is a list */
+        if (data[startPos] == 0x00) {
+            int offset;
+            int elCount;
+
+            /*This chunk determines the number of elements in the list */
+            /* If the serialized list has less than 128 items */
+            if ((data[1 + startPos] & 0xFF) > (0x80 & 0xFF)) {
+                /* Loop to deserialize x objects where
+                 * x = data[1] % 0x80 */
+                offset = 2;
+                elCount = (data[1 + startPos] & 0xFF) % (0x80 & 0xFF);
+            } else {
+                /* If it has more than 128 items */
+                /* Because it's not a 1 byte count, no need to & 0xFF or % (0x80 & 0xFF) */
+                byte[] elCountBytes = Arrays.copyOfRange(data, 2 + startPos, 2 + data[1 + startPos]);
+                offset = 2 + elCountBytes.length;
+                elCount = fromBytes(elCountBytes) + 127;
+            }
+
+            /* Now that the number of elements is known, we can loop to
+             * deserialize each one of them and add them to the ENCList */
+
+            for (int i = 0; i < elCount; i++) {
+                Tuple<Boolean, Integer> item = isEncoded(data, offset);
+                if (!item.x) return new Tuple<>(false, 0);
+                offset+= item.y;
+            }
+
+            return new Tuple<>(true, offset);
+        } else {
+            /* If the serialized item is not a list */
+            int offset;
+            int elLength;
+
+            /* If serialized item is less than 128 bytes in length */
+            if ((data[0 + startPos] & 0xFF) >= (0x80 & 0xFF)) {
+                offset = 1;
+                elLength = (data[0 + startPos] & 0xFF) % (0x80 & 0xFF);
+            } else {
+                /* If the item is greater than 128 bytes */
+                byte[] elLengthBytes = Arrays.copyOfRange(data, 1 + startPos, 1 + (data[startPos] & 0xFF) + startPos);
+                offset = 1 + elLengthBytes.length;
+                elLength = fromBytes(elLengthBytes) + 127;
+            }
+
+            /* Now that the element length is known, we can deserialize it & return
+             * it in an ENCList containing 1 item. */
+            byte[] item;
+            if ((offset + elLength + startPos) <= data.length) {
+                item = Arrays.copyOfRange(data, offset + startPos, offset + elLength + startPos);
+                return new Tuple<>(true, item.length + getLengthBytes(item.length).length);
+            } else {
+                return new Tuple<>(false, 0);
+            }
+        }
+    }
+
     public static byte[] getLengthBytes(int i) {
         try {
             if (i < 1) {
-                throw new Exception("Cannot encode an object with no data.");
+                return new byte[]{(byte) 0x80};
             } else {
                 byte[] out;
 
@@ -119,6 +203,7 @@ public class TRENC {
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
