@@ -1,4 +1,4 @@
-package org.levk.trashcan;
+package org.levk.CrispyRotaryPhone;
 
 import java.util.ArrayList;
 
@@ -29,7 +29,7 @@ public class ENCList extends ArrayList<ENCItem> {
         for (int i = 0; i < super.size(); i++) {
             data[i] = super.get(i).getEncData();
         }
-        return TRENC.encode(data);
+        return CRPENC.encode(data);
     }
 
     public boolean isList(int i) {
@@ -37,7 +37,7 @@ public class ENCList extends ArrayList<ENCItem> {
     }
 
     public ENCList getList(int i) {
-        return TRENC.decode(super.get(i).getEncData());
+        return CRPENC.decode(super.get(i).getEncData());
     }
 
     public byte[] getBytes(int i) {

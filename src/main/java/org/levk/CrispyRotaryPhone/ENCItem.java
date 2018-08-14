@@ -1,4 +1,4 @@
-package org.levk.trashcan;
+package org.levk.CrispyRotaryPhone;
 
 import java.util.Arrays;
 
@@ -43,6 +43,6 @@ public class ENCItem {
     }
 
     private boolean isEncoded() {
-        return TRENC.isEncoded(data);
+        return CRPENC.isEncoded(data);
     }
 }

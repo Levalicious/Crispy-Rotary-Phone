@@ -1,9 +1,9 @@
-package org.levk.trashcan;
+package org.levk.CrispyRotaryPhone;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
-public class TRENC {
+public class CRPENC {
     public static final byte[] EMPTY_ELEMENT_TRENC = encode(new byte[1]);
 
     public static byte[] encode(byte[] data) {
