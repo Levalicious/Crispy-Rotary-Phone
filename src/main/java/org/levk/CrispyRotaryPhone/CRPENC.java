@@ -112,18 +112,18 @@ public class CRPENC {
     }
 
     public static boolean isEncoded(byte[] data) {
-        Tuple<Boolean, Integer> isEnc = isEncoded(data, 0);
+        Object[] isEnc = isEncoded(data, 0);
 
-        if (!isEnc.x) return false;
+        if (!(boolean) isEnc[0]) return false;
 
-        if (isEnc.y != data.length) return false;
+        if ((int) isEnc[1] != data.length) return false;
 
         return true;
     }
 
-    public static Tuple<Boolean, Integer> isEncoded(byte[] data, int startPos) {
+    public static Object[] isEncoded(byte[] data, int startPos) {
         if (data[startPos] == ((byte)0x80)) {
-            return new Tuple(true, 1);
+            return new Object[]{true, 1};
         }
 
         /* If the serialized item is a list */
@@ -150,12 +150,12 @@ public class CRPENC {
              * deserialize each one of them and add them to the ENCList */
 
             for (int i = 0; i < elCount; i++) {
-                Tuple<Boolean, Integer> item = isEncoded(data, offset);
-                if (!item.x) return new Tuple<>(false, 0);
-                offset+= item.y;
+                Object[] item = isEncoded(data, offset);
+                if (!(boolean) item[0]) return new Object[]{false, 0};
+                offset+= (int) item[1];
             }
 
-            return new Tuple<>(true, offset);
+            return new Object[]{true, offset};
         } else {
             /* If the serialized item is not a list */
             int offset;
@@ -177,9 +177,9 @@ public class CRPENC {
             byte[] item;
             if ((offset + elLength + startPos) <= data.length) {
                 item = Arrays.copyOfRange(data, offset + startPos, offset + elLength + startPos);
-                return new Tuple<>(true, item.length + getLengthBytes(item.length).length);
+                return new Object[]{true, item.length + getLengthBytes(item.length).length};
             } else {
-                return new Tuple<>(false, 0);
+                return new Object[]{false, 0};
             }
         }
     }
