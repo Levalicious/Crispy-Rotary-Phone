@@ -1,6 +1,7 @@
 package org.levk.CrispyRotaryPhone;
 
 import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 public class CRPENC {
@@ -112,13 +113,17 @@ public class CRPENC {
     }
 
     public static boolean isEncoded(byte[] data) {
-        Object[] isEnc = isEncoded(data, 0);
+        try {
+            Object[] isEnc = isEncoded(data, 0);
 
-        if (!(boolean) isEnc[0]) return false;
+            if (!(boolean) isEnc[0]) return false;
 
-        if ((int) isEnc[1] != data.length) return false;
+            if ((int) isEnc[1] != data.length) return false;
 
-        return true;
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     public static Object[] isEncoded(byte[] data, int startPos) {
@@ -209,7 +214,9 @@ public class CRPENC {
     }
 
     public static int fromBytes(byte[] in) {
-        return Integer.parseUnsignedInt((new ENCItem(in)).toString(), 16);
+        if (in == null || in.length == 0)
+            return 0;
+        return new BigInteger(1, in).intValue();
     }
 
     public static byte[] intToBytesNoLeadZeroes(int val){
